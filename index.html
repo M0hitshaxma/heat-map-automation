@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heat Map Automation Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        @keyframes move-stars { from { transform: translateY(0); } to { transform: translateY(-2000px); } }
+        @keyframes dust { 0% { transform: translate(0, 0); } 50% { transform: translate(20px, 30px); } 100% { transform: translate(0, 0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0%, 100% { text-shadow: 0 0 10px rgba(165, 180, 252, 0.5); } 50% { text-shadow: 0 0 20px rgba(165, 180, 252, 0.8); } }
+        @keyframes pop-in-effect {
+            0% { opacity: 0; transform: translateY(50px) scale(0.8); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        /* UPDATED: Simple bounce animation for the contact button */
+        @keyframes bounce-fab {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; color: #e2e8f0; background-color: #020617; }
+        
+        #background-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background-color: #020617; overflow: hidden; }
+        .stars { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: transparent; }
+        .stars1 { background-image: radial-gradient(1px 1px at 20px 30px, #fff, #0000), radial-gradient(1px 1px at 40px 70px, #fff, #0000), radial-gradient(1px 1px at 50px 160px, #fff, #0000), radial-gradient(1px 1px at 90px 40px, #fff, #0000), radial-gradient(2px 2px at 130px 80px, #fff, #0000), radial-gradient(1px 1px at 160px 120px, #fff, #0000); background-size: 200px 200px; animation: move-stars 120s linear infinite; }
+        #cosmic-dust { position: absolute; width: 100%; height: 100%; background-image: radial-gradient(circle at 20% 20%, rgba(124, 58, 237, 0.1) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(21, 128, 61, 0.1) 0%, transparent 40%); animation: dust 30s ease-in-out infinite; }
+        
+        #top-banner { position: absolute; top: 0; left: 0; width: 100%; text-align: center; padding: 1rem; color: #c7d2fe; font-weight: 600; letter-spacing: 0.1em; animation: pulse 4s ease-in-out infinite; }
+        
+        .main-container {
+            background-color: rgba(15, 23, 42, 0.6); 
+            backdrop-filter: blur(16px) saturate(150%);
+            -webkit-backdrop-filter: blur(16px) saturate(150%);
+            border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        /* UPDATED: Simple contact button with bounce animation */
+        #feedback-fab {
+            position: fixed;
+            bottom: 2rem; right: 2rem;
+            width: 60px; height: 60px; border-radius: 50%;
+            background: linear-gradient(45deg, #4f46e5, #7c3aed);
+            color: white; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; box-shadow: 0 5px 20px rgba(99, 102, 241, 0.5);
+            z-index: 1000;
+            animation: bounce-fab 3s ease-in-out infinite 2s;
+        }
+        #feedback-fab:hover { animation-play-state: paused; transform: scale(1.1); }
+        
+        /* UPDATED: Reverted to a simple rectangular widget */
+        #feedback-widget {
+            position: fixed; bottom: 6.5rem; right: 2rem;
+            width: 320px;
+            background-color: rgba(30, 41, 59, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 999; opacity: 0; visibility: hidden; transform-origin: bottom right;
+            padding: 1rem;
+        }
+        #feedback-widget.visible { opacity: 1; visibility: visible; animation: pop-in-effect 0.5s forwards cubic-bezier(0.34, 1.56, 0.64, 1); }
+        
+        #feedback-widget textarea {
+            width: 100%; padding: 0.75rem; margin-bottom: 1rem;
+            height: 150px; border: 1px solid #475569; background-color: #1e293b; color: #cbd5e1;
+            border-radius: 6px; resize: none;
+        }
+        #feedback-widget button { width: 100%; padding: 0.6rem; background-color: #4f46e5; color: white; border-radius: 6px; font-weight: 600; }
+        
+        .animated-child { opacity: 0; animation: fadeInUp 0.8s ease-out forwards; }
+        .interactive-section { transition: transform 0.3s ease, background-color 0.3s ease; background-color: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .interactive-section:hover { transform: translateY(-5px); background-color: rgba(51, 65, 85, 0.7); }
+        .file-input-label { cursor: pointer; border: 2px dashed #475569; background-color: rgba(51, 65, 85, 0.5); transition: all 0.3s ease; }
+        .file-input-label:hover { border-color: #6366f1; background-color: rgba(67, 56, 202, 0.2); }
+        .styled-button { background: linear-gradient(45deg, #4338ca, #6d28d9); color: white; font-weight: 600; box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.2); transition: all 0.3s ease; }
+        .styled-button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px 0 rgba(124, 58, 237, 0.3); }
+        .styled-button-light { background-color: #e2e8f0; color: #1e293b; font-weight: 600; box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1); transition: all 0.3s ease; }
+        .styled-button-light:hover { transform: translateY(-2px); background-color: #f8fafc; box-shadow: 0 6px 20px 0 rgba(200, 200, 200, 0.2); }
+        .loader { border-top-color: #4f46e5; animation: spinner 1.5s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .results-table th { background-color: #1e293b; border-bottom: 2px solid #334155; }
+        .results-table td { border-bottom: 1px solid #334155; background-color: #0f172a; }
+        .results-table td.sticky { background-color: #1e293b; }
+        input[type="radio"]:checked + label { color: #a5b4fc; font-weight: 600; }
+    </style>
+</head>
+<body class="p-4">
+
+    <div id="background-container">
+        <div id="cosmic-dust"></div>
+        <div class="stars stars1"></div>
+    </div>
+    
+    <header id="top-banner">Customer Success @ Lucio AI</header>
+
+    <main class="min-h-screen flex items-center justify-center pt-16 pb-4">
+        <div class="main-container w-full max-w-5xl p-6 md:p-10 space-y-8">
+            <header class="text-center pb-4 animated-child" style="animation-delay: 0.1s;"><h1 class="text-4xl font-bold text-gray-100 tracking-tight">Heat Map Automation Tool</h1><p class="text-gray-400 mt-2 text-lg">Generate a color-coded usage analysis from your daily reports.</p></header>
+            <div class="space-y-8">
+                <div id="upload-section" class="space-y-6">
+                    <div class="interactive-section p-5 rounded-lg animated-child" style="animation-delay: 0.2s;"><label class="font-semibold text-gray-200 text-center block text-lg">1. Select Analysis Interval</label><div class="flex justify-center gap-x-8 mt-3"><div class="flex items-center"><input id="interval-7" type="radio" name="interval" value="7" class="h-4 w-4 text-indigo-500 bg-slate-600 border-slate-500 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-800" checked><label for="interval-7" class="ml-3 text-md text-gray-300">7 Days (Weekly)</label></div><div class="flex items-center"><input id="interval-14" type="radio" name="interval" value="14" class="h-4 w-4 text-indigo-500 bg-slate-600 border-slate-500 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-800"><label for="interval-14" class="ml-3 text-md text-gray-300">14 Days (Bi-Weekly)</label></div></div></div>
+                    <div class="interactive-section p-5 rounded-lg animated-child" style="animation-delay: 0.3s;"><label for="file-input" class="font-semibold text-gray-200 block mb-3 text-center text-lg">2. Attach Your Excel File</label><input type="file" id="file-input" class="hidden" accept=".xlsx, .xls"><label for="file-input" id="file-input-label" class="file-input-label p-8 rounded-xl block text-center"><span class="text-indigo-400 font-semibold">Click here or drag & drop a file</span><span id="file-name" class="mt-2 text-gray-400 block h-5">No file selected.</span></label></div>
+                </div>
+                <div id="status-section" class="hidden text-center space-y-4 pt-8"><div class="flex justify-center items-center"><div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-600 h-12 w-12"></div></div><p id="status-message" class="text-lg font-medium text-gray-300">Processing your report...</p></div>
+                <div id="error-box" class="hidden bg-red-900/50 border-l-4 border-red-500 text-red-300 p-4 rounded-md" role="alert"><p class="font-bold">Error!</p><p id="error-message">Something went wrong.</p></div>
+            </div>
+            <div id="results-section" class="hidden"><div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4"><h2 class="text-3xl font-bold text-gray-100">Automation completed</h2><div class="flex flex-wrap justify-center gap-3"><button id="download-summary-btn" class="styled-button-light py-2 px-5 rounded-lg">Download Absolute Report</button><button id="download-analysis-btn" class="styled-button py-2 px-5 rounded-lg">Download Analysis Report</button><button id="download-full-report-btn" class="styled-button py-2 px-5 rounded-lg">Download Final Report</button></div></div><div class="overflow-x-auto border border-slate-700 rounded-lg shadow-lg"><table id="results-table" class="min-w-full results-table"><thead id="results-table-head"></thead><tbody id="results-table-body"></tbody></table></div></div>
+        </div>
+    </main>
+    
+    <div id="feedback-fab">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+    </div>
+    <div id="feedback-widget">
+        <textarea id="feedback-message" placeholder="Found an issue or have a feature request? Let Mohit know about it..."></textarea>
+        <button id="send-feedback-btn">Send to Mohit directly</button>
+    </div>
+    
+    <script>
+        // --- SCRIPT SECTION ---
+        const fileInput = document.getElementById('file-input');
+        const fileNameDisplay = document.getElementById('file-name');
+        const uploadSection = document.getElementById('upload-section');
+        const statusSection = document.getElementById('status-section');
+        const statusMessage = document.getElementById('status-message');
+        const resultsSection = document.getElementById('results-section');
+        const resultsTableHead = document.getElementById('results-table-head');
+        const resultsTableBody = document.getElementById('results-table-body');
+        const downloadAnalysisBtn = document.getElementById('download-analysis-btn');
+        const downloadSummaryBtn = document.getElementById('download-summary-btn');
+        const errorBox = document.getElementById('error-box');
+        const errorMessage = document.getElementById('error-message');
+        const downloadFullReportBtn = document.getElementById('download-full-report-btn');
+        
+        let periodSummaryData = null; 
+        let finalAnalysisData = null; 
+
+        fileInput.addEventListener('change', handleFile);
+        
+        const feedbackFab = document.getElementById('feedback-fab');
+        const feedbackWidget = document.getElementById('feedback-widget');
+        const sendFeedbackBtn = document.getElementById('send-feedback-btn');
+        const feedbackMessage = document.getElementById('feedback-message');
+        
+        function toggleFeedbackWidget() {
+            feedbackWidget.classList.toggle('visible');
+        }
+
+        feedbackFab.addEventListener('click', toggleFeedbackWidget);
+        
+        sendFeedbackBtn.addEventListener('click', () => {
+            const message = feedbackMessage.value;
+            if (message.trim() === '') {
+                alert('Please enter a message before sending.');
+                return;
+            }
+            const subject = "Feedback/Bug Report for Heat Map Tool";
+            const body = encodeURIComponent(message);
+            window.location.href = `mailto:Mohit@lucioai.com?subject=${subject}&body=${body}`;
+            feedbackMessage.value = '';
+            feedbackWidget.classList.remove('visible');
+        });
+
+        // --- Core Application Logic (Unchanged) ---
+        function handleFile(event) { const file = event.target.files[0]; if (!file) { fileNameDisplay.textContent = 'No file selected.'; return; } fileNameDisplay.textContent = `Attached: ${file.name}`; processFile(file); }
+        async function processFile(file) { const interval = parseInt(document.querySelector('input[name="interval"]:checked').value, 10); uploadSection.classList.add('hidden'); resultsSection.classList.add('hidden'); errorBox.classList.add('hidden'); statusSection.classList.remove('hidden'); statusMessage.textContent = 'Analyzing your file...'; try { const reader = new FileReader(); reader.onload = async (e) => { const data = new Uint8Array(e.target.result); const workbook = XLSX.read(data, { type: 'array' }); statusMessage.textContent = 'Step 1/2: Aggregating usage...'; await new Promise(resolve => setTimeout(resolve, 50)); try { const periodSummary = await createPeriodSummary(workbook, interval); periodSummaryData = periodSummary; if (!periodSummary || periodSummary.users.length === 0) { throw new Error("No user data found to generate a report."); } statusMessage.textContent = 'Step 2/2: Finalizing report...'; await new Promise(resolve => setTimeout(resolve, 50)); const analysisResult = analyzePeriodSummary(periodSummary); finalAnalysisData = analysisResult; renderTable(analysisResult); statusSection.classList.add('hidden'); resultsSection.classList.remove('hidden'); uploadSection.classList.remove('hidden'); fileNameDisplay.textContent = 'Attach another file to start over.'; fileInput.value = ''; } catch (err) { showError(err.message); } }; reader.onerror = () => { throw new Error("Failed to read the file."); }; reader.readAsArrayBuffer(file); } catch (err) { showError(err.message); } }
+        function showError(message) { errorMessage.textContent = message; errorBox.classList.remove('hidden'); statusSection.classList.add('hidden'); uploadSection.classList.remove('hidden'); fileNameDisplay.textContent = 'Please try again.'; fileInput.value = ''; }
+        async function createPeriodSummary(workbook, interval) {
+            const documentSheets = ['Assistant', 'Briefcase', 'OCR', 'Sorting Hat', 'Redline Issues', 'Consent Tracker', 'Redaction', 'Chat', 'Translator', 'Workflow Builder', 'Chronologies', 'Dataroom Insights', 'Snapshot'];
+            const querySheets = ['Assistant Queries', 'Briefcase Queries', 'Chat Queries'];
+            const parseDate = (dateStr) => { if (typeof dateStr !== 'string') return null; const parts = dateStr.match(/^(\d{2})-(\d{2})-(\d{4})$/); if (!parts) return null; const date = new Date(Date.UTC(parts[3], parts[2] - 1, parts[1])); return isNaN(date.getTime()) ? null : date; };
+            const getAggregatedData = (sheetList, allUserIds) => { const aggregated = {}; const allDates = new Set(); allUserIds.forEach(user => aggregated[user] = {}); sheetList.forEach(sheetName => { if (workbook.SheetNames.includes(sheetName)) { const ws = workbook.Sheets[sheetName]; const jsonData = XLSX.utils.sheet_to_json(ws, { raw: true }); const headers = XLSX.utils.sheet_to_json(ws, { header: 1 })[0] || []; jsonData.forEach(row => { const userId = row['UserID']; if (!userId || !allUserIds.has(userId)) return; headers.forEach(header => { const date = parseDate(header); if (date) { const dateString = date.toISOString().split('T')[0]; allDates.add(dateString); const numValue = parseInt(row[header], 10) || 0; if (numValue > 0) { aggregated[userId][dateString] = (aggregated[userId][dateString] || 0) + numValue; } } }); }); } }); return { data: aggregated, dates: Array.from(allDates).sort() }; };
+            const allUserIds = new Set(); [...documentSheets, ...querySheets].forEach(sheetName => { if (workbook.SheetNames.includes(sheetName)) { const ws = workbook.Sheets[sheetName]; const jsonData = XLSX.utils.sheet_to_json(ws, { raw: true }); jsonData.forEach(row => { if (row['UserID']) allUserIds.add(row['UserID']); }); } }); if (allUserIds.size === 0) throw new Error("No 'UserID' column found.");
+            const sortedUsers = Array.from(allUserIds).sort(); const docAgg = getAggregatedData(documentSheets, allUserIds); const queryAgg = getAggregatedData(querySheets, allUserIds); const allDates = [...new Set([...docAgg.dates, ...queryAgg.dates])].sort((a,b) => new Date(a) - new Date(b)); if (allDates.length === 0) throw new Error("No valid date columns found in DD-MM-YYYY format.");
+            const periods = {}; let periodNum = 1; let currentPeriodStart = new Date(allDates[0]); const endOfData = new Date(allDates[allDates.length - 1]);
+            while (currentPeriodStart <= endOfData) { const currentPeriodEnd = new Date(currentPeriodStart); currentPeriodEnd.setDate(currentPeriodStart.getDate() + (interval - 1)); const formatDate = (d) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', timeZone: 'UTC' }); const label = `Period ${periodNum} (${formatDate(currentPeriodStart)} to ${formatDate(currentPeriodEnd)})`; const datesInThisPeriod = allDates.filter(dStr => new Date(dStr) >= currentPeriodStart && new Date(dStr) <= currentPeriodEnd); if (datesInThisPeriod.length > 0) periods[label] = datesInThisPeriod; currentPeriodStart.setDate(currentPeriodStart.getDate() + interval); periodNum++; }
+            const summary = { users: sortedUsers, periods: Object.keys(periods), data: {} };
+            sortedUsers.forEach(user => { summary.data[user] = {}; Object.entries(periods).forEach(([periodLabel, dateRange]) => { const docSum = dateRange.reduce((sum, dateStr) => sum + (docAgg.data[user][dateStr] || 0), 0); const querySum = dateRange.reduce((sum, dateStr) => sum + (queryAgg.data[user][dateStr] || 0), 0); summary.data[user][periodLabel] = { Documents: docSum, Queries: querySum }; }); }); return summary;
+        }
+        function analyzePeriodSummary(periodSummary) { const analysis = { users: periodSummary.users, periods: periodSummary.periods, data: {} }; analysis.users.forEach(user => { analysis.data[user] = {}; analysis.periods.forEach(period => { const { Documents: docsNum, Queries: queriesNum } = periodSummary.data[user][period]; let status = 'Not Used'; if (docsNum >= 9 || queriesNum >= 9) status = 'Good usage.'; else if (docsNum > 0 || queriesNum > 0) status = 'Used, but potential for more.'; analysis.data[user][period] = status; }); }); return analysis; }
+        // UPDATED: Changed 'UserID' to 'User ID'
+        function renderTable(analysisResult) {
+            resultsTableHead.innerHTML = ''; resultsTableBody.innerHTML = '';
+            const headerRow = document.createElement('tr');
+            let th = document.createElement('th');
+            th.textContent = 'User ID'; // Changed here
+            th.className = 'sticky left-0 px-6 py-3 text-left font-bold text-gray-200 uppercase tracking-wider text-sm z-10';
+            headerRow.appendChild(th);
+            analysisResult.periods.forEach(period => { th = document.createElement('th'); th.textContent = period; th.className = 'px-6 py-3 text-center font-bold text-gray-200 uppercase tracking-wider text-sm'; headerRow.appendChild(th); });
+            resultsTableHead.appendChild(headerRow);
+            analysisResult.users.forEach(user => { const row = document.createElement('tr'); let td = document.createElement('td'); td.textContent = user; td.className = 'sticky left-0 px-6 py-4 whitespace-nowrap font-medium text-gray-200 text-sm'; row.appendChild(td); analysisResult.periods.forEach(period => { const status = analysisResult.data[user][period]; td = document.createElement('td'); td.textContent = status; td.className = 'px-6 py-4 whitespace-nowrap font-semibold text-center text-sm'; if (status === 'Not Used') td.classList.add('bg-red-900/50', 'text-red-300'); else if (status === 'Used, but potential for more.') td.classList.add('bg-yellow-900/50', 'text-yellow-300'); else if (status === 'Good usage.') td.classList.add('bg-green-900/50', 'text-green-300'); row.appendChild(td); }); resultsTableBody.appendChild(row); });
+        }
+        function calculateOverallSummary(analysisData) { const dataWithOverall = JSON.parse(JSON.stringify(analysisData)); const summaryCounts = { 'Not Used': 0, 'Good / Regular Usage': 0, 'Intermittent Usage': 0 }; dataWithOverall.users.forEach(user => { const statuses = dataWithOverall.periods.map(p => dataWithOverall.data[user][p]); const activePeriods = statuses.filter(s => s !== 'Not Used').length; let overallStatus = 'Not Used'; if (activePeriods > 0) { overallStatus = (activePeriods / statuses.length) > 0.5 ? 'Good / Regular Usage' : 'Intermittent Usage'; } dataWithOverall.data[user].overall = overallStatus; summaryCounts[overallStatus]++; }); let maxCount = 0; let organizationBehavior = 'Not Used'; for (const [status, count] of Object.entries(summaryCounts)) { if (count > maxCount) { maxCount = count; organizationBehavior = status; } } return { dataWithOverall, summaryCounts, organizationBehavior }; }
+        // UPDATED: Changed 'UserID' to 'User ID'
+        function createAbsoluteReportSheet(workbook, summaryData) {
+            const worksheet = workbook.addWorksheet('Absolute Data');
+            const headerStyle = { font: { bold: true, color: { argb: 'FF1E3A8A' } }, alignment: { horizontal: 'center', vertical: 'middle', wrapText: true }, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD6EAF8' } }, border: { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } } };
+            const subHeaderStyle = { ...headerStyle, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEBF5FB' } } };
+            const cellStyle = { alignment: { horizontal: 'center', vertical: 'middle' }, border: { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } } };
+            const periodHeaderRow = worksheet.addRow(['User ID']); // Changed here
+            const categoryHeaderRow = worksheet.addRow(['']); let colIndex = 2;
+            summaryData.periods.forEach(period => { worksheet.mergeCells(1, colIndex, 1, colIndex + 1); periodHeaderRow.getCell(colIndex).value = period; categoryHeaderRow.getCell(colIndex).value = 'Documents'; categoryHeaderRow.getCell(colIndex + 1).value = 'Queries'; colIndex += 2; });
+            worksheet.getRow(1).eachCell({ includeEmpty: true }, cell => cell.style = headerStyle);
+            worksheet.getRow(2).eachCell({ includeEmpty: true }, cell => cell.style = subHeaderStyle);
+            summaryData.users.forEach(user => { const rowData = [user, ...summaryData.periods.flatMap(p => [summaryData.data[user][p].Documents, summaryData.data[user][p].Queries])]; worksheet.addRow(rowData).eachCell({ includeEmpty: true }, cell => cell.style = cellStyle); });
+            worksheet.addRow([]);
+            const conclusionTitleRow = worksheet.addRow(['Conclusion']); conclusionTitleRow.getCell(1).style = { font: { bold: true, size: 16 }, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEAECEE' } }}; worksheet.mergeCells(`A${conclusionTitleRow.number}:C${conclusionTitleRow.number}`);
+            const conclusionHeader = worksheet.addRow(['User ID', 'Total Documents Uploaded', 'Total Queries Asked']); // Changed here
+            conclusionHeader.eachCell(cell => cell.style = headerStyle);
+            let grandTotalDocs = 0; let grandTotalQueries = 0;
+            summaryData.users.forEach(user => { const totalDocs = summaryData.periods.reduce((sum, p) => sum + summaryData.data[user][p].Documents, 0); const totalQueries = summaryData.periods.reduce((sum, p) => sum + summaryData.data[user][p].Queries, 0); grandTotalDocs += totalDocs; grandTotalQueries += totalQueries; worksheet.addRow([user, totalDocs, totalQueries]).eachCell(cell => cell.style = cellStyle); });
+            worksheet.addRow([]);
+            const grandTotalRow = worksheet.addRow(['OVERALL TOTAL', grandTotalDocs, grandTotalQueries]); grandTotalRow.getCell(1).style = { ...headerStyle, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD5D8DC' } }}; grandTotalRow.getCell(2).style = { ...cellStyle, font: {bold: true} }; grandTotalRow.getCell(3).style = { ...cellStyle, font: {bold: true} };
+            worksheet.getColumn(1).width = 35; for (let i = 2; i <= (summaryData.periods.length * 2) + 1; i++) { worksheet.getColumn(i).width = 15; }
+            worksheet.views = [{ state: 'frozen', xSplit: 1, ySplit: 2 }];
+        }
+        async function downloadWorkbook(workbook, fileName) { const buffer = await workbook.xlsx.writeBuffer(); const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = fileName; document.body.appendChild(link); link.click(); document.body.removeChild(link); }
+        // UPDATED: Changed 'UserID' to 'User ID'
+        downloadAnalysisBtn.addEventListener('click', async () => { if (!finalAnalysisData) return; const workbook = new ExcelJS.Workbook(); const worksheet = workbook.addWorksheet('Usage Analysis'); const styles = { red: { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC7CE' } }, font: { color: { argb: 'FF9C0006' }, bold: true }, alignment: { horizontal: 'center', vertical: 'middle' } }, yellow: { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFEB9C' } }, font: { color: { argb: 'FF9C6500' }, bold: true }, alignment: { horizontal: 'center', vertical: 'middle' } }, green: { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC6EFCE' } }, font: { color: { argb: 'FF006100' }, bold: true }, alignment: { horizontal: 'center', vertical: 'middle' } }, header: { font: { bold: true }, alignment: { horizontal: 'center', vertical: 'middle' } } }; const headerRow = worksheet.addRow(['User ID', ...finalAnalysisData.periods]); headerRow.eachCell((cell) => { cell.style = styles.header; }); finalAnalysisData.users.forEach(user => { const rowData = [user, ...finalAnalysisData.periods.map(period => finalAnalysisData.data[user][period])]; const row = worksheet.addRow(rowData); row.eachCell({ includeEmpty: true }, (cell, colNumber) => { if (colNumber > 1) { const status = cell.value; if (status === 'Not Used') cell.style = styles.red; else if (status === 'Used, but potential for more.') cell.style = styles.yellow; else if (status === 'Good usage.') cell.style = styles.green; } }); }); worksheet.getColumn(1).width = 35; for (let i = 2; i <= finalAnalysisData.periods.length + 1; i++) { worksheet.getColumn(i).width = 30; } downloadWorkbook(workbook, 'Analysis_Report.xlsx'); });
+        downloadSummaryBtn.addEventListener('click', async () => { if (!periodSummaryData) return; const workbook = new ExcelJS.Workbook(); createAbsoluteReportSheet(workbook, periodSummaryData); downloadWorkbook(workbook, 'Absolute_Report.xlsx'); });
+        // UPDATED: Changed 'UserID' to 'User ID'
+        downloadFullReportBtn.addEventListener('click', async () => { if (!finalAnalysisData) return; const { dataWithOverall, summaryCounts, organizationBehavior } = calculateOverallSummary(finalAnalysisData); const workbook = new ExcelJS.Workbook(); const worksheet = workbook.addWorksheet('Final Report'); const styles = { red: { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC7CE' } }, font: { color: { argb: 'FF9C0006' }, bold: true }, alignment: { horizontal: 'center', vertical: 'middle' } }, yellow: { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFEB9C' } }, font: { color: { argb: 'FF9C6500' }, bold: true }, alignment: { horizontal: 'center', vertical: 'middle' } }, green: { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC6EFCE' } }, font: { color: { argb: 'FF006100' }, bold: true }, alignment: { horizontal: 'center', vertical: 'middle' } }, header: { font: { bold: true, color: { argb: 'FF1E3A8A' } }, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD6EAF8' } }, alignment: { horizontal: 'center', vertical: 'middle' } }, summaryHeader: { font: { bold: true, size: 14 }, fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1D5DB' } } } }; const headerRow = worksheet.addRow(['User ID', ...dataWithOverall.periods, 'Overall']); headerRow.eachCell((cell) => { cell.style = styles.header; }); dataWithOverall.users.forEach(user => { const statuses = dataWithOverall.periods.map(period => dataWithOverall.data[user][period]); const overall = dataWithOverall.data[user].overall; const row = worksheet.addRow([user, ...statuses, overall]); row.eachCell({ includeEmpty: true }, (cell, colNumber) => { const status = cell.value; if (colNumber > 1 && colNumber <= dataWithOverall.periods.length + 1) { if (status === 'Not Used') cell.style = styles.red; else if (status === 'Used, but potential for more.') cell.style = styles.yellow; else if (status === 'Good usage.') cell.style = styles.green; } else if (colNumber > dataWithOverall.periods.length + 1) { if (status === 'Not Used') cell.style = styles.red; else if (status === 'Intermittent Usage') cell.style = styles.yellow; else if (status === 'Good / Regular Usage') cell.style = styles.green; } }); }); worksheet.getColumn(1).width = 35; for (let i = 2; i <= dataWithOverall.periods.length + 2; i++) { worksheet.getColumn(i).width = 25; } worksheet.addRow([]); const summaryTitleRow = worksheet.addRow(['Overall Summary']); worksheet.mergeCells(`A${summaryTitleRow.number}:B${summaryTitleRow.number}`); summaryTitleRow.getCell(1).style = styles.summaryHeader; worksheet.addRow(['Category', 'Total Users']).font = { bold: true }; worksheet.addRow(['Not Used', summaryCounts['Not Used']]); worksheet.addRow(['Good / Regular Usage', summaryCounts['Good / Regular Usage']]); worksheet.addRow(['Intermittent Usage', summaryCounts['Intermittent Usage']]); worksheet.addRow(['Sum Total', dataWithOverall.users.length]); worksheet.addRow([]); const behaviorRow = worksheet.addRow(['Overall Organisation Usage Behaviour', organizationBehavior]); behaviorRow.getCell(1).font = { bold: true }; const behaviorStatus = behaviorRow.getCell(2).value; if (behaviorStatus === 'Not Used') behaviorRow.getCell(2).style = styles.red; else if (behaviorStatus === 'Intermittent Usage') behaviorRow.getCell(2).style = styles.yellow; else if (behaviorStatus === 'Good / Regular Usage') behaviorRow.getCell(2).style = styles.green; if (periodSummaryData) { createAbsoluteReportSheet(workbook, periodSummaryData); } downloadWorkbook(workbook, 'Final_Report.xlsx'); });
+    </script>
+</body>
+</html>
