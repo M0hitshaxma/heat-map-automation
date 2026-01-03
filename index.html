@@ -1,103 +1,320 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Heat Map Automation Tool</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./output.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <style>
-        @keyframes move-stars { from { transform: translateY(0); } to { transform: translateY(-2000px); } }
-        @keyframes dust { 0% { transform: translate(0, 0); } 50% { transform: translate(20px, 30px); } 100% { transform: translate(0, 0); } }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes pulse { 0%, 100% { text-shadow: 0 0 10px rgba(165, 180, 252, 0.5); } 50% { text-shadow: 0 0 20px rgba(165, 180, 252, 0.8); } }
-        @keyframes pop-in-effect {
-            0% { opacity: 0; transform: translateY(50px) scale(0.8); }
-            100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes bounce-fab {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
+        @keyframes move-stars {
+            from {
+                transform: translateY(0);
+            }
+
+            to {
+                transform: translateY(-2000px);
+            }
         }
 
-        html { scroll-behavior: smooth; }
-        body { font-family: 'Inter', sans-serif; color: #e2e8f0; background-color: #020617; }
-        
-        #background-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background-color: #020617; overflow: hidden; }
-        .stars { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: transparent; }
-        .stars1 { background-image: radial-gradient(1px 1px at 20px 30px, #fff, #0000), radial-gradient(1px 1px at 40px 70px, #fff, #0000), radial-gradient(1px 1px at 50px 160px, #fff, #0000), radial-gradient(1px 1px at 90px 40px, #fff, #0000), radial-gradient(2px 2px at 130px 80px, #fff, #0000), radial-gradient(1px 1px at 160px 120px, #fff, #0000); background-size: 200px 200px; animation: move-stars 120s linear infinite; }
-        #cosmic-dust { position: absolute; width: 100%; height: 100%; background-image: radial-gradient(circle at 20% 20%, rgba(124, 58, 237, 0.1) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(21, 128, 61, 0.1) 0%, transparent 40%); animation: dust 30s ease-in-out infinite; }
-        
-        #top-banner { position: absolute; top: 0; left: 0; width: 100%; text-align: center; padding: 1rem; color: #c7d2fe; font-weight: 600; letter-spacing: 0.1em; animation: pulse 4s ease-in-out infinite; }
-        
+        @keyframes dust {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            50% {
+                transform: translate(20px, 30px);
+            }
+
+            100% {
+                transform: translate(0, 0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                text-shadow: 0 0 10px rgba(165, 180, 252, 0.5);
+            }
+
+            50% {
+                text-shadow: 0 0 20px rgba(165, 180, 252, 0.8);
+            }
+        }
+
+        @keyframes pop-in-effect {
+            0% {
+                opacity: 0;
+                transform: translateY(50px) scale(0.8);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes bounce-fab {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: #e2e8f0;
+            background-color: #020617;
+        }
+
+        #background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-color: #020617;
+            overflow: hidden;
+        }
+
+        .stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: transparent;
+        }
+
+        .stars1 {
+            background-image: radial-gradient(1px 1px at 20px 30px, #fff, #0000), radial-gradient(1px 1px at 40px 70px, #fff, #0000), radial-gradient(1px 1px at 50px 160px, #fff, #0000), radial-gradient(1px 1px at 90px 40px, #fff, #0000), radial-gradient(2px 2px at 130px 80px, #fff, #0000), radial-gradient(1px 1px at 160px 120px, #fff, #0000);
+            background-size: 200px 200px;
+            animation: move-stars 120s linear infinite;
+        }
+
+        #cosmic-dust {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(circle at 20% 20%, rgba(124, 58, 237, 0.1) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(21, 128, 61, 0.1) 0%, transparent 40%);
+            animation: dust 30s ease-in-out infinite;
+        }
+
+        #top-banner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            padding: 1rem;
+            color: #c7d2fe;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            animation: pulse 4s ease-in-out infinite;
+        }
+
         .main-container {
-            background-color: rgba(15, 23, 42, 0.6); 
+            background-color: rgba(15, 23, 42, 0.6);
             backdrop-filter: blur(16px) saturate(150%);
             -webkit-backdrop-filter: blur(16px) saturate(150%);
-            border-radius: 20px; 
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); 
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.1);
             animation: fadeInUp 0.8s ease-out forwards;
         }
 
         #feedback-fab {
             position: fixed;
-            bottom: 2rem; right: 2rem;
-            width: 60px; height: 60px; border-radius: 50%;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
             background: linear-gradient(45deg, #4f46e5, #7c3aed);
-            color: white; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; box-shadow: 0 5px 20px rgba(99, 102, 241, 0.5);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(99, 102, 241, 0.5);
             z-index: 1000;
             animation: bounce-fab 3s ease-in-out infinite 2s;
         }
-        #feedback-fab:hover { animation-play-state: paused; transform: scale(1.1); }
-        
+
+        #feedback-fab:hover {
+            animation-play-state: paused;
+            transform: scale(1.1);
+        }
+
         #feedback-widget {
-            position: fixed; bottom: 6.5rem; right: 2rem;
+            position: fixed;
+            bottom: 6.5rem;
+            right: 2rem;
             width: 320px;
             background-color: rgba(30, 41, 59, 0.9);
             backdrop-filter: blur(10px);
             border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 999; opacity: 0; visibility: hidden; transform-origin: bottom right;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transform-origin: bottom right;
             padding: 1rem;
         }
-        #feedback-widget.visible { opacity: 1; visibility: visible; animation: pop-in-effect 0.5s forwards cubic-bezier(0.34, 1.56, 0.64, 1); }
-        
-        #feedback-widget textarea {
-            width: 100%; padding: 0.75rem; margin-bottom: 1rem;
-            height: 150px; border: 1px solid #475569; background-color: #1e293b; color: #cbd5e1;
-            border-radius: 6px; resize: none;
+
+        #feedback-widget.visible {
+            opacity: 1;
+            visibility: visible;
+            animation: pop-in-effect 0.5s forwards cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        #feedback-widget button { width: 100%; padding: 0.6rem; background-color: #4f46e5; color: white; border-radius: 6px; font-weight: 600; }
-        
-        .animated-child { opacity: 0; animation: fadeInUp 0.8s ease-out forwards; }
-        .interactive-section { transition: transform 0.3s ease, background-color 0.3s ease; background-color: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .interactive-section:hover { transform: translateY(-5px); background-color: rgba(51, 65, 85, 0.7); }
-        .file-input-label { cursor: pointer; border: 2px dashed #475569; background-color: rgba(51, 65, 85, 0.5); transition: all 0.3s ease; }
-        .file-input-label:hover { border-color: #6366f1; background-color: rgba(67, 56, 202, 0.2); }
-        .styled-button { background: linear-gradient(45deg, #4338ca, #6d28d9); color: white; font-weight: 600; box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.2); transition: all 0.3s ease; }
-        .styled-button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px 0 rgba(124, 58, 237, 0.3); }
-        .styled-button-light { background-color: #e2e8f0; color: #1e293b; font-weight: 600; box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1); transition: all 0.3s ease; }
-        .styled-button-light:hover { transform: translateY(-2px); background-color: #f8fafc; box-shadow: 0 6px 20px 0 rgba(200, 200, 200, 0.2); }
-        .loader { border-top-color: #4f46e5; animation: spinner 1.5s linear infinite; }
-        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .results-table th { background-color: #1e293b; border-bottom: 2px solid #334155; }
-        .results-table td { border-bottom: 1px solid #334155; background-color: #0f172a; }
-        .results-table td.sticky { background-color: #1e293b; }
-        input[type="radio"]:checked + label { color: #a5b4fc; font-weight: 600; }
+
+        #feedback-widget textarea {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            height: 150px;
+            border: 1px solid #475569;
+            background-color: #1e293b;
+            color: #cbd5e1;
+            border-radius: 6px;
+            resize: none;
+        }
+
+        #feedback-widget button {
+            width: 100%;
+            padding: 0.6rem;
+            background-color: #4f46e5;
+            color: white;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .animated-child {
+            opacity: 0;
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        .interactive-section {
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            background-color: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .interactive-section:hover {
+            transform: translateY(-5px);
+            background-color: rgba(51, 65, 85, 0.7);
+        }
+
+        .file-input-label {
+            cursor: pointer;
+            border: 2px dashed #475569;
+            background-color: rgba(51, 65, 85, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .file-input-label:hover {
+            border-color: #6366f1;
+            background-color: rgba(67, 56, 202, 0.2);
+        }
+
+        .styled-button {
+            background: linear-gradient(45deg, #4338ca, #6d28d9);
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .styled-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px 0 rgba(124, 58, 237, 0.3);
+        }
+
+        .styled-button-light {
+            background-color: #e2e8f0;
+            color: #1e293b;
+            font-weight: 600;
+            box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .styled-button-light:hover {
+            transform: translateY(-2px);
+            background-color: #f8fafc;
+            box-shadow: 0 6px 20px 0 rgba(200, 200, 200, 0.2);
+        }
+
+        .loader {
+            border-top-color: #4f46e5;
+            animation: spinner 1.5s linear infinite;
+        }
+
+        @keyframes spinner {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .results-table th {
+            background-color: #1e293b;
+            border-bottom: 2px solid #334155;
+        }
+
+        .results-table td {
+            border-bottom: 1px solid #334155;
+            background-color: #0f172a;
+        }
+
+        .results-table td.sticky {
+            background-color: #1e293b;
+        }
+
+        input[type="radio"]:checked+label {
+            color: #a5b4fc;
+            font-weight: 600;
+        }
     </style>
 </head>
+
 <body class="p-4">
 
     <div id="background-container">
         <div id="cosmic-dust"></div>
         <div class="stars stars1"></div>
     </div>
-    
+
     <header id="top-banner">Customer Success @ Lucio AI</header>
 
     <main class="min-h-screen flex items-center justify-center pt-16 pb-4">
@@ -109,22 +326,28 @@
             <div class="space-y-8">
                 <div id="upload-section" class="space-y-6">
                     <div class="interactive-section p-5 rounded-lg animated-child" style="animation-delay: 0.2s;">
-                        <label class="font-semibold text-gray-200 text-center block text-lg">1. Select Analysis Interval</label>
+                        <label class="font-semibold text-gray-200 text-center block text-lg">1. Select Analysis
+                            Interval</label>
                         <div class="flex justify-center gap-x-8 mt-3">
                             <div class="flex items-center">
-                                <input id="interval-7" type="radio" name="interval" value="7" class="h-4 w-4 text-indigo-500 bg-slate-600 border-slate-500 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-800" checked>
+                                <input id="interval-7" type="radio" name="interval" value="7"
+                                    class="h-4 w-4 text-indigo-500 bg-slate-600 border-slate-500 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-800"
+                                    checked>
                                 <label for="interval-7" class="ml-3 text-md text-gray-300">7 Days (Weekly)</label>
                             </div>
                             <div class="flex items-center">
-                                <input id="interval-14" type="radio" name="interval" value="14" class="h-4 w-4 text-indigo-500 bg-slate-600 border-slate-500 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-800">
+                                <input id="interval-14" type="radio" name="interval" value="14"
+                                    class="h-4 w-4 text-indigo-500 bg-slate-600 border-slate-500 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-800">
                                 <label for="interval-14" class="ml-3 text-md text-gray-300">14 Days (Bi-Weekly)</label>
                             </div>
                         </div>
                     </div>
                     <div class="interactive-section p-5 rounded-lg animated-child" style="animation-delay: 0.3s;">
-                        <label for="file-input" class="font-semibold text-gray-200 block mb-3 text-center text-lg">2. Attach Your Excel File</label>
+                        <label for="file-input" class="font-semibold text-gray-200 block mb-3 text-center text-lg">2.
+                            Attach Your Excel File</label>
                         <input type="file" id="file-input" class="hidden" accept=".xlsx, .xls">
-                        <label for="file-input" id="file-input-label" class="file-input-label p-8 rounded-xl block text-center">
+                        <label for="file-input" id="file-input-label"
+                            class="file-input-label p-8 rounded-xl block text-center">
                             <span class="text-indigo-400 font-semibold">Click here or drag & drop a file</span>
                             <span id="file-name" class="mt-2 text-gray-400 block h-5">No file selected.</span>
                         </label>
@@ -132,11 +355,13 @@
                 </div>
                 <div id="status-section" class="hidden text-center space-y-4 pt-8">
                     <div class="flex justify-center items-center">
-                        <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-600 h-12 w-12"></div>
+                        <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-600 h-12 w-12">
+                        </div>
                     </div>
                     <p id="status-message" class="text-lg font-medium text-gray-300">Processing your report...</p>
                 </div>
-                <div id="error-box" class="hidden bg-red-900/50 border-l-4 border-red-500 text-red-300 p-4 rounded-md" role="alert">
+                <div id="error-box" class="hidden bg-red-900/50 border-l-4 border-red-500 text-red-300 p-4 rounded-md"
+                    role="alert">
                     <p class="font-bold">Error!</p>
                     <p id="error-message">Something went wrong.</p>
                 </div>
@@ -145,9 +370,12 @@
                 <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
                     <h2 class="text-3xl font-bold text-gray-100">Automation completed</h2>
                     <div class="flex flex-wrap justify-center gap-3">
-                        <button id="download-summary-btn" class="styled-button-light py-2 px-5 rounded-lg">Download Absolute Report</button>
-                        <button id="download-analysis-btn" class="styled-button py-2 px-5 rounded-lg">Download Analysis Report</button>
-                        <button id="download-full-report-btn" class="styled-button py-2 px-5 rounded-lg">Download Final Report</button>
+                        <button id="download-summary-btn" class="styled-button-light py-2 px-5 rounded-lg">Download
+                            Absolute Report</button>
+                        <button id="download-analysis-btn" class="styled-button py-2 px-5 rounded-lg">Download Analysis
+                            Report</button>
+                        <button id="download-full-report-btn" class="styled-button py-2 px-5 rounded-lg">Download Final
+                            Report</button>
                     </div>
                 </div>
                 <div class="overflow-x-auto border border-slate-700 rounded-lg shadow-lg">
@@ -159,17 +387,20 @@
             </div>
         </div>
     </main>
-    
+
     <div id="feedback-fab">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke-width="2"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
         </svg>
     </div>
     <div id="feedback-widget">
-        <textarea id="feedback-message" placeholder="Found an issue or have a feature request? Let Mohit know about it..."></textarea>
+        <textarea id="feedback-message"
+            placeholder="Found an issue or have a feature request? Let Mohit know about it..."></textarea>
         <button id="send-feedback-btn">Send to Mohit directly</button>
     </div>
-    
+
     <script>
         // --- SCRIPT SECTION ---
         const fileInput = document.getElementById('file-input');
@@ -185,23 +416,23 @@
         const errorBox = document.getElementById('error-box');
         const errorMessage = document.getElementById('error-message');
         const downloadFullReportBtn = document.getElementById('download-full-report-btn');
-        
-        let periodSummaryData = null; 
-        let finalAnalysisData = null; 
+
+        let periodSummaryData = null;
+        let finalAnalysisData = null;
 
         fileInput.addEventListener('change', handleFile);
-        
+
         const feedbackFab = document.getElementById('feedback-fab');
         const feedbackWidget = document.getElementById('feedback-widget');
         const sendFeedbackBtn = document.getElementById('send-feedback-btn');
         const feedbackMessage = document.getElementById('feedback-message');
-        
+
         function toggleFeedbackWidget() {
             feedbackWidget.classList.toggle('visible');
         }
 
         feedbackFab.addEventListener('click', toggleFeedbackWidget);
-        
+
         sendFeedbackBtn.addEventListener('click', () => {
             const message = feedbackMessage.value;
             if (message.trim() === '') {
@@ -348,7 +579,7 @@
             const queryAgg = getAggregatedData(querySheets, allUserIds);
 
             const allDates = [...new Set([...docAgg.dates, ...queryAgg.dates])]
-                .sort((a,b) => new Date(a) - new Date(b));
+                .sort((a, b) => new Date(a) - new Date(b));
 
             if (allDates.length === 0) throw new Error("No valid date columns found in DD-MM-YYYY format.");
 
@@ -895,4 +1126,5 @@
         });
     </script>
 </body>
+
 </html>
